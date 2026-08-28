@@ -6,9 +6,6 @@ pipeline {
         FRONTEND_IMAGE = "three-tier-frontend"
     }
 
-    tools {
-        sonarQube 'sonarqube'
-    }
 
     stages {
 
