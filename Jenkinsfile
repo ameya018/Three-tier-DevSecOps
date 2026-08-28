@@ -2,9 +2,12 @@ pipeline {
     agent any
 
     environment {
+        BACKEND_IMAGE = "three-tier-backend"
         FRONTEND_IMAGE = "three-tier-frontend"
-        BACKEND_IMAGE  = "three-tier-backend"
-        IMAGE_TAG      = "${BUILD_NUMBER}"
+    }
+
+    tools {
+        sonarQube 'sonarqube'
     }
 
     stages {
@@ -18,9 +21,29 @@ pipeline {
         stage('Workspace Info') {
             steps {
                 sh '''
-                    pwd
-                    ls -la
-                    ls -la Application-Code
+                pwd
+                ls -la
+                '''
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('sonarqube') {
+                    sh '''
+                    sonar-scanner \
+                    -Dsonar.projectKey=three-tier-devsecops \
+                    -Dsonar.projectName=three-tier-devsecops \
+                    -Dsonar.sources=Application-Code
+                    '''
+                }
+            }
+        }
+
+        stage('Trivy Filesystem Scan') {
+            steps {
+                sh '''
+                trivy fs --severity HIGH,CRITICAL .
                 '''
             }
         }
@@ -29,8 +52,7 @@ pipeline {
             steps {
                 dir('Application-Code/backend') {
                     sh '''
-                        docker build \
-                        -t ${BACKEND_IMAGE}:${IMAGE_TAG} .
+                    docker build -t ${BACKEND_IMAGE}:latest .
                     '''
                 }
             }
@@ -40,33 +62,33 @@ pipeline {
             steps {
                 dir('Application-Code/frontend') {
                     sh '''
-                        docker build \
-                        -t ${FRONTEND_IMAGE}:${IMAGE_TAG} .
+                    docker build -t ${FRONTEND_IMAGE}:latest .
                     '''
                 }
             }
         }
 
-        stage('Verify Images') {
+        stage('Trivy Image Scan') {
             steps {
                 sh '''
-                    docker images | grep three-tier
+                trivy image --severity HIGH,CRITICAL ${BACKEND_IMAGE}:latest
+                trivy image --severity HIGH,CRITICAL ${FRONTEND_IMAGE}:latest
                 '''
             }
         }
     }
 
     post {
+        always {
+            sh 'docker images'
+        }
+
         success {
-            echo 'Build completed successfully'
+            echo 'Pipeline completed successfully'
         }
 
         failure {
-            echo 'Build failed'
-        }
-
-        always {
-            cleanWs()
+            echo 'Pipeline failed'
         }
     }
 }
