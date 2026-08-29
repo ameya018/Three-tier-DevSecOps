@@ -24,19 +24,22 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv('sonarqube') {
-                    sh '''
-                    sonar-scanner \
+stage('SonarQube Analysis') {
+    steps {
+        script {
+            def scannerHome = tool 'sonar-scanner'
+
+            withSonarQubeEnv('sonarqube') {
+                sh """
+                    ${scannerHome}/bin/sonar-scanner \
                     -Dsonar.projectKey=three-tier-devsecops \
                     -Dsonar.projectName=three-tier-devsecops \
                     -Dsonar.sources=Application-Code
-                    '''
-                }
+                """
             }
         }
-
+    }
+}
         stage('Trivy Filesystem Scan') {
             steps {
                 sh '''
