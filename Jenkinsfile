@@ -2,16 +2,11 @@ pipeline {
     agent any
 
     environment {
-        AWS_REGION     = "ap-south-1"
-        AWS_ACCOUNT_ID = "610269527042"
+        AWS_REGION     = 'ap-south-1'
+        AWS_ACCOUNT_ID = '610269527042'
 
-        BACKEND_IMAGE  = "three-tier-backend"
-        FRONTEND_IMAGE = "three-tier-frontend"
-
-        BACKEND_REPO   = "three-tier-backend"
-        FRONTEND_REPO  = "three-tier-frontend"
-
-        IMAGE_TAG      = "${BUILD_NUMBER}"
+        BACKEND_IMAGE  = 'three-tier/backend'
+        FRONTEND_IMAGE = 'three-tier/frontend'
     }
 
     stages {
@@ -60,7 +55,7 @@ pipeline {
             steps {
                 dir('Application-Code/backend') {
                     sh '''
-                    docker build -t ${BACKEND_IMAGE}:latest .
+                    docker build -t three-tier-backend:latest .
                     '''
                 }
             }
@@ -70,7 +65,7 @@ pipeline {
             steps {
                 dir('Application-Code/frontend') {
                     sh '''
-                    docker build -t ${FRONTEND_IMAGE}:latest .
+                    docker build -t three-tier-frontend:latest .
                     '''
                 }
             }
@@ -79,8 +74,8 @@ pipeline {
         stage('Trivy Image Scan') {
             steps {
                 sh '''
-                trivy image --severity HIGH,CRITICAL ${BACKEND_IMAGE}:latest
-                trivy image --severity HIGH,CRITICAL ${FRONTEND_IMAGE}:latest
+                trivy image --severity HIGH,CRITICAL three-tier-backend:latest
+                trivy image --severity HIGH,CRITICAL three-tier-frontend:latest
                 '''
             }
         }
@@ -89,10 +84,8 @@ pipeline {
             steps {
                 sh '''
                 aws ecr get-login-password --region ${AWS_REGION} | \
-                docker login \
-                --username AWS \
-                --password-stdin \
-                ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+                docker login --username AWS \
+                --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
                 '''
             }
         }
@@ -100,11 +93,11 @@ pipeline {
         stage('Tag Images') {
             steps {
                 sh '''
-                docker tag ${BACKEND_IMAGE}:latest \
-                ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${BACKEND_REPO}:${IMAGE_TAG}
+                docker tag three-tier-backend:latest \
+                ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${BACKEND_IMAGE}:${BUILD_NUMBER}
 
-                docker tag ${FRONTEND_IMAGE}:latest \
-                ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${FRONTEND_REPO}:${IMAGE_TAG}
+                docker tag three-tier-frontend:latest \
+                ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${FRONTEND_IMAGE}:${BUILD_NUMBER}
                 '''
             }
         }
@@ -113,7 +106,7 @@ pipeline {
             steps {
                 sh '''
                 docker push \
-                ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${BACKEND_REPO}:${IMAGE_TAG}
+                ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${BACKEND_IMAGE}:${BUILD_NUMBER}
                 '''
             }
         }
@@ -122,13 +115,14 @@ pipeline {
             steps {
                 sh '''
                 docker push \
-                ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${FRONTEND_REPO}:${IMAGE_TAG}
+                ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${FRONTEND_IMAGE}:${BUILD_NUMBER}
                 '''
             }
         }
     }
 
     post {
+
         always {
             sh 'docker images'
         }
