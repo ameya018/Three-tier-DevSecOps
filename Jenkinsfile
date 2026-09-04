@@ -7,6 +7,8 @@ pipeline {
 
         BACKEND_IMAGE  = 'three-tier/backend'
         FRONTEND_IMAGE = 'three-tier/frontend'
+
+        GITOPS_REPO    = 'https://github.com/ameya018/Three-tier-gitops.git'
     }
 
     stages {
@@ -51,11 +53,23 @@ pipeline {
             }
         }
 
+        stage('ECR Login') {
+            steps {
+                sh '''
+                aws ecr get-login-password --region ${AWS_REGION} | \
+                docker login --username AWS \
+                --password-stdin \
+                ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+                '''
+            }
+        }
+
         stage('Build Backend Image') {
             steps {
                 dir('Application-Code/backend') {
                     sh '''
-                    docker build -t three-tier-backend:latest .
+                    docker build \
+                    -t ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${BACKEND_IMAGE}:${BUILD_NUMBER} .
                     '''
                 }
             }
@@ -65,7 +79,8 @@ pipeline {
             steps {
                 dir('Application-Code/frontend') {
                     sh '''
-                    docker build -t three-tier-frontend:latest .
+                    docker build \
+                    -t ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${FRONTEND_IMAGE}:${BUILD_NUMBER} .
                     '''
                 }
             }
@@ -74,29 +89,10 @@ pipeline {
         stage('Trivy Image Scan') {
             steps {
                 sh '''
-                trivy image --severity HIGH,CRITICAL three-tier-backend:latest
-                trivy image --severity HIGH,CRITICAL three-tier-frontend:latest
-                '''
-            }
-        }
-
-        stage('ECR Login') {
-            steps {
-                sh '''
-                aws ecr get-login-password --region ${AWS_REGION} | \
-                docker login --username AWS \
-                --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
-                '''
-            }
-        }
-
-        stage('Tag Images') {
-            steps {
-                sh '''
-                docker tag three-tier-backend:latest \
+                trivy image --severity HIGH,CRITICAL \
                 ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${BACKEND_IMAGE}:${BUILD_NUMBER}
 
-                docker tag three-tier-frontend:latest \
+                trivy image --severity HIGH,CRITICAL \
                 ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${FRONTEND_IMAGE}:${BUILD_NUMBER}
                 '''
             }
@@ -119,20 +115,58 @@ pipeline {
                 '''
             }
         }
+
+        stage('Update GitOps Repo') {
+            steps {
+
+                withCredentials([
+                    string(
+                        credentialsId: 'github-token',
+                        variable: 'GITHUB_TOKEN'
+                    )
+                ]) {
+
+                    sh '''
+                    rm -rf gitops
+
+                    git clone https://${GITHUB_TOKEN}@github.com/ameya018/Three-tier-gitops.git gitops
+
+                    sed -i "s|image: .*three-tier/backend:.*|image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${BACKEND_IMAGE}:${BUILD_NUMBER}|g" \
+                    gitops/backend/deployment.yaml
+
+                    sed -i "s|image: .*three-tier/frontend:.*|image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${FRONTEND_IMAGE}:${BUILD_NUMBER}|g" \
+                    gitops/frontend/deployment.yaml
+
+                    cd gitops
+
+                    git config user.email "jenkins@local"
+                    git config user.name "Jenkins"
+
+                    git add .
+
+                    git commit -m "Update image tags to build ${BUILD_NUMBER}" || true
+
+                    git push origin main
+                    '''
+                }
+            }
+        }
     }
 
     post {
 
         always {
-            sh 'docker images'
+            sh '''
+            docker images
+            '''
         }
 
         success {
-            echo 'Pipeline completed successfully'
+            echo 'CI/CD Pipeline Completed Successfully'
         }
 
         failure {
-            echo 'Pipeline failed'
+            echo 'CI/CD Pipeline Failed'
         }
     }
 }
