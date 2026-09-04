@@ -6,7 +6,7 @@ body {
         radial-gradient(circle at top left, #7c3aed22, transparent 35%),
         radial-gradient(circle at bottom right, #06b6d422, transparent 35%),
         #0a0f1f;
-    color: #f8fafc;
+    color: white;
     overflow-x: hidden;
 }
 
