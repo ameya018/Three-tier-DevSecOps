@@ -142,8 +142,7 @@ pipeline {
                     git config user.email "jenkins@local"
                     git config user.name "Jenkins"
 		    
-                    git remote set-url origin \ 
-                    https://${GITHUB_TOKEN}@github.com/ameya018/Three-tier-gitops.git
+                    git remote set-url origin https://${GITHUB_TOKEN}@github.com/ameya018/Three-tier-gitops.git
 
                     git add .
 
