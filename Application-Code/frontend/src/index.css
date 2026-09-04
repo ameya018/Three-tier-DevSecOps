@@ -2,9 +2,18 @@ body {
     margin: 0;
     padding: 0;
     font-family: 'Roboto', sans-serif;
-    background-color: #f4f4f4;
-    color: #333;
+
+    /* Premium Dark Graphite Background */
+    background: linear-gradient(
+        135deg,
+        #0f1117 0%,
+        #1a1d24 50%,
+        #252a34 100%
+    );
+
+    color: #e5e7eb;
     line-height: 1.6;
+    min-height: 100vh;
 }
 
 .app-wrapper {
@@ -13,28 +22,55 @@ body {
     align-items: center;
     min-height: 100vh;
     padding: 20px;
-    background: linear-gradient(135deg, #6e8efb, #a777e3);
+
+    /* Same background for consistency */
+    background: linear-gradient(
+        135deg,
+        #0f1117 0%,
+        #1a1d24 50%,
+        #252a34 100%
+    );
 }
 
-/* Optional: Add some more global styles for typography */
-h1, h2, h3, h4, h5, h6 {
+/* Typography */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
     font-weight: 400;
+    color: #f8fafc;
+}
+
+p {
+    color: #cbd5e1;
 }
 
 a {
-    color: #333;
+    color: #60a5fa;
     text-decoration: none;
+    transition: 0.3s ease;
 }
 
 a:hover {
-    color: #6e8efb;
+    color: #93c5fd;
 }
 
-/* Styling for any code elements */
+/* Code blocks */
 code {
-    background-color: #eee;
-    padding: 2px 4px;
+    background-color: #111827;
+    color: #e5e7eb;
+    padding: 2px 6px;
     border-radius: 4px;
     font-family: 'Courier New', monospace;
 }
 
+/* Smooth Rendering */
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
