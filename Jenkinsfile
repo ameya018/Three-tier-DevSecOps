@@ -141,12 +141,15 @@ pipeline {
 
                     git config user.email "jenkins@local"
                     git config user.name "Jenkins"
+		    
+                    git remote set-url origin \ 
+                    https://${GITHUB_TOKEN}@github.com/ameya018/Three-tier-gitops.git
 
                     git add .
 
                     git commit -m "Update image tags to build ${BUILD_NUMBER}" || true
 
-                    git push origin main
+                    git push origin HEAD:main
                     '''
                 }
             }
