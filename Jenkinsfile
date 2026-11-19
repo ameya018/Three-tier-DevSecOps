@@ -135,7 +135,7 @@ pipeline {
                     gitops/helm/templates/backend-deployment.yaml
 
                     sed -i "s|image: .*three-tier/frontend:.*|image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${FRONTEND_IMAGE}:${BUILD_NUMBER}|g" \
-                    gitops/helm/templates/frontend/deployment.yaml
+                    gitops/helm/templates/frontend-deployment.yaml
 
                     cd gitops
 
