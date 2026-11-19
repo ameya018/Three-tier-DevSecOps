@@ -129,7 +129,7 @@ pipeline {
                     sh '''
                     rm -rf gitops
 
-                    git clone https://${GITHUB_TOKEN}@github.com/ameya018/Three-tier-gitops.git gitops
+                    git clone https://ameya018:${GITHUB_TOKEN}@github.com/ameya018/Three-tier-gitops.git gitops
 
                     sed -i "s|image: .*three-tier/backend:.*|image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${BACKEND_IMAGE}:${BUILD_NUMBER}|g" \
                     gitops/helm/templates/backend-deployment.yaml
@@ -142,7 +142,7 @@ pipeline {
                     git config user.email "jenkins@local"
                     git config user.name "Jenkins"
 		    
-                    git remote set-url origin https://${GITHUB_TOKEN}@github.com/ameya018/Three-tier-gitops.git
+                    git remote set-url origin https://ameya018:${GITHUB_TOKEN}@github.com/ameya018/Three-tier-gitops.git
 
                     git add .
 
