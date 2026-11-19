@@ -132,10 +132,10 @@ pipeline {
                     git clone https://${GITHUB_TOKEN}@github.com/ameya018/Three-tier-gitops.git gitops
 
                     sed -i "s|image: .*three-tier/backend:.*|image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${BACKEND_IMAGE}:${BUILD_NUMBER}|g" \
-                    gitops/backend/deployment.yaml
+                    gitops/helm/templates/backend-deployment.yaml
 
                     sed -i "s|image: .*three-tier/frontend:.*|image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${FRONTEND_IMAGE}:${BUILD_NUMBER}|g" \
-                    gitops/frontend/deployment.yaml
+                    gitops/helm/templates/frontend/deployment.yaml
 
                     cd gitops
 
