@@ -1,1 +1,0 @@
-GitOps integration test
